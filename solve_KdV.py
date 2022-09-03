@@ -3,14 +3,14 @@ from matplotlib import pyplot as plt
 from matplotlib import animation
 
 #----- Numerical integration of ODE via fixed-step classical Runge-Kutta -----
-def RK4Stream(odefunc,TimeSpan,uhat0,nt):
-    h = float(TimeSpan[1]-TimeSpan[0])/nt
-    w = uhat0
-    t = TimeSpan[0]
-    while t <= TE:
-        w = RK4Step(odefunc, t, w, h)
-        t = t+h
-        yield t,w
+# def RK4Stream(odefunc,TimeSpan,uhat0,nt):
+#     h = float(TimeSpan[1]-TimeSpan[0])/nt
+#     w = uhat0
+#     t = TimeSpan[0]
+#     while t <= TE:
+#         w = RK4Step(odefunc, t, w, h)
+#         t = t+h
+#         yield t,w
 
 def RK4Step(odefunc, t,w,h):
     k1 = odefunc(t,w)
@@ -19,14 +19,26 @@ def RK4Step(odefunc, t,w,h):
     k4 = odefunc(t+h,     w+k3*h)
     return w + (k1+2*k2+2*k3+k4)*(h/6.)
 
+class RK4Stream:
+    def __init__(self,odefunc,TimeSpan,uhat0,nt):
+        self.h = float(TimeSpan[1]-TimeSpan[0])/nt
+        self.w = uhat0
+        self.t = TimeSpan[0]
+        self.odefunc = odefunc
+
+    def next(self):
+        self.w = RK4Step(self.odefunc, self.t, self.w, self.h)
+        self.t = self.t+self.h
+        return self.t,self.w
+
 #----- Constructing the grid -----
 L   = 2.
 nx  = 512
 x   = np.linspace(0.,L, nx+1)
-x   = x[:nx]  
+x   = x[:nx]
 
-kx1 = np.linspace(0,nx/2-1,nx/2)
-kx2 = np.linspace(1,nx/2,  nx/2)
+kx1 = np.linspace(0,nx//2-1,nx//2)
+kx2 = np.linspace(1,nx//2,  nx//2)
 kx2 = -1*kx2[::-1]
 kx  = (2.* np.pi/L)*np.concatenate((kx1,kx2))
 
@@ -93,6 +105,6 @@ def animate(i):
     return line, time_text1, time_text2, time_text3
 
 anim = animation.FuncAnimation(fig, animate, interval=15/nt+10, blit=False, save_count=5400)
-anim.save('KdV.mp4', dpi = 300, writer=writer)
+#anim.save('KdV.mp4', dpi = 300, writer=writer)
 
 plt.show()
